@@ -44,13 +44,13 @@ void inputPositive(short *variable) { // check for positive value
     } while(cond);
 }
 
-void displayMatrix(short rows, short columns, float matrix[rows][columns], float members[]) {
+void displayMatrix(short rows,float matrix[rows][rows], float members[]) {
     printf("\nYou have entered:\n");
     for(int i = 0; i < rows; i++) {
-        for(int j = 0; j <= columns; j++) {
-            if(j == columns - 1) {
+        for(int j = 0; j <= rows; j++) {
+            if(j == rows - 1) {
                 printf("%gx%d = ", matrix[i][j], j+1);
-            } else if (j == columns) {
+            } else if (j == rows) {
                 printf("%g\n", members[i]);
             }else {
                 printf("%gx%d + ", matrix[i][j], j + 1);
@@ -59,17 +59,17 @@ void displayMatrix(short rows, short columns, float matrix[rows][columns], float
     }
 }
 
-float det(short rows, short columns, float matrix[rows][columns]) {
+float det(short rows, float matrix[rows][rows]) {
     float determinant = 0;
-    float temp[rows-1][columns-1];
+    float temp[rows-1][rows-1];
     if (rows==1) {
         return matrix[0][0];
     }
 
-    for(int i = 0; i < columns; i++) {
+    for(int i = 0; i < rows; i++) {
         for(int j = 1; j < rows; j++) {
             short shift = 0;
-            for(int k = 0; k < columns; k++) {
+            for(int k = 0; k < rows; k++) {
                 if(k != i) {
                     temp[j-1][k-shift] = matrix[j][k];
                 } else {
@@ -77,29 +77,26 @@ float det(short rows, short columns, float matrix[rows][columns]) {
                 }
             }
         }
-      //  displayMatrix(rows-1, columns-1, temp);
-        determinant += matrix[0][i]*pow((-1), i)*det(rows-1, columns-1, temp);
+        determinant += matrix[0][i]*pow((-1), i)*det(rows-1,temp);
     }
 
     return determinant;
 }
 
 int main() {
-    short equ, vars;
+    short size;
     float detCoefs;
 
-    printf("Enter the number of equations:");
-    inputPositive(&equ);
-    printf("Enter the number of variables:");
-    inputPositive(&vars);
+    printf("Enter the size of SLAR:");
+    inputPositive(&size);
 
-    float coefs[equ][vars];
-    float freem[equ];
-    float roots[equ][vars];
+    float coefs[size][size];
+    float freem[size];
+    float roots[size][size];
 
-    for(int i = 0; i < equ; i++) {
-        for(int j = 0; j <= vars; j++) {
-            if(j != vars) {
+    for(int i = 0; i < size; i++) {
+        for(int j = 0; j <= size; j++) {
+            if(j != size) {
                 printf("a%d%d=", i+1, j+1);
                 noCharFloat(&coefs[i][j]);
             } else {
@@ -108,18 +105,18 @@ int main() {
             }
         }
     }
-    displayMatrix(equ, vars, coefs, freem);
+    displayMatrix(size, coefs, freem);
 
-    detCoefs = det(equ, vars, coefs);
+    detCoefs = det(size, coefs);
 
     if (detCoefs==0) {
         printf("Impossible to calculate using Kramer's method!");
         return 0;
     }
 
-    for(int i = 0; i < vars; i++) {
-        for(int j = 0; j < equ; j++) {
-            for(int k = 0; k < vars; k++) {
+    for(int i = 0; i < size; i++) {
+        for(int j = 0; j < size; j++) {
+            for(int k = 0; k < size; k++) {
                 if(k==i) {
                     roots[j][k] = freem[j];
                 } else {
@@ -128,7 +125,7 @@ int main() {
             }
         }
 
-        printf("x%d = %g\n", i+1, det(equ, vars, roots) / detCoefs);
+        printf("x%d = %g\n", i+1, det(size, roots) / detCoefs);
     }
     return 0;
 }
