@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <math.h>
+#include <malloc.h>
 
-void noCharInt(short *var) { //checking for characters
+void noCharShort(short *var) { //checking for characters
     char cond, ch;
     do {
         cond = 0;
@@ -35,7 +36,7 @@ void inputPositive(short *variable) { // check for positive value
     char cond;
     do {
         cond = 0;
-        noCharInt(variable);
+        noCharShort(variable);
         if((*variable) <= 0) {
             printf("Number should be higher than 0\n");
             cond = 1;
@@ -44,13 +45,13 @@ void inputPositive(short *variable) { // check for positive value
     } while(cond);
 }
 
-void displayMatrix(short rows, short columns, float matrix[rows][columns], float members[]) {
+void displayMatrix(short n, float **matrix, float *members) {
     printf("\nYou have entered:\n");
-    for(int i = 0; i < rows; i++) {
-        for(int j = 0; j <= columns; j++) {
-            if(j == columns - 1) {
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j <= n; j++) {
+            if(j == n - 1) {
                 printf("%gx%d = ", matrix[i][j], j+1);
-            } else if (j == columns) {
+            } else if (j == n) {
                 printf("%g\n", members[i]);
             }else {
                 printf("%gx%d + ", matrix[i][j], j + 1);
@@ -59,76 +60,105 @@ void displayMatrix(short rows, short columns, float matrix[rows][columns], float
     }
 }
 
-float det(short rows, short columns, float matrix[rows][columns]) {
-    float determinant = 0;
-    float temp[rows-1][columns-1];
-    if (rows==1) {
-        return matrix[0][0];
-    }
-
-    for(int i = 0; i < columns; i++) {
-        for(int j = 1; j < rows; j++) {
-            short shift = 0;
-            for(int k = 0; k < columns; k++) {
-                if(k != i) {
-                    temp[j-1][k-shift] = matrix[j][k];
-                } else {
-                    shift = 1;
-                }
-            }
-        }
-      //  displayMatrix(rows-1, columns-1, temp);
-        determinant += matrix[0][i]*pow((-1), i)*det(rows-1, columns-1, temp);
-    }
-
-    return determinant;
-}
-
 int main() {
-    short equ, vars;
-    float detCoefs;
+    short size, e;
+    float **a, *b, *x, *xp, *delta, prop;
 
-    printf("Enter the number of equations:");
-    inputPositive(&equ);
-    printf("Enter the number of variables:");
-    inputPositive(&vars);
+    printf("Enter the size of SLAR:");
+    inputPositive(&size);
+    printf("Enter precision:");
+    inputPositive(&e);
 
-    float coefs[equ][vars];
-    float freem[equ];
-    float roots[equ][vars];
-
-    for(int i = 0; i < equ; i++) {
-        for(int j = 0; j <= vars; j++) {
-            if(j != vars) {
-                printf("a%d%d=", i+1, j+1);
-                noCharFloat(&coefs[i][j]);
-            } else {
-                printf("b%d=", i+1);
-                noCharFloat(&freem[i]);
-            }
+    a = (float **) malloc(size * sizeof(float*));
+    if(a==NULL) {
+        printf("Impossible to allocate memory");
+        return 0;
+    }
+    for(int i = 0; i < size; i++) {
+        a[i] = (float*) malloc(size * sizeof(float));
+        if(a[i]==NULL) {
+            printf("Impossible to allocate memory");
+            return 0;
         }
     }
-    displayMatrix(equ, vars, coefs, freem);
-
-    detCoefs = det(equ, vars, coefs);
-
-    if (detCoefs==0) {
-        printf("Impossible to calculate using Kramer's method!");
+    b = (float*) malloc(size * sizeof(float));
+    if(b==NULL) {
+        printf("Impossible to allocate memory");
+        return 0;
+    }
+    x = (float*) malloc(size * sizeof(float));
+    if(x==NULL) {
+        printf("Impossible to allocate memory");
+        return 0;
+    }
+    xp = (float*) malloc(size * sizeof(float));
+    if(xp==NULL) {
+        printf("Impossible to allocate memory");
+        return 0;
+    }
+    delta = (float*) malloc(size * sizeof(float));
+    if(delta==NULL) {
+        printf("Impossible to allocate memory");
         return 0;
     }
 
-    for(int i = 0; i < vars; i++) {
-        for(int j = 0; j < equ; j++) {
-            for(int k = 0; k < vars; k++) {
-                if(k==i) {
-                    roots[j][k] = freem[j];
-                } else {
-                    roots[j][k] = coefs[j][k];
-                }
+    for(int i = 0; i < size; i++) {
+        short cond;
+        float sum;
+        do {
+            cond = 0;
+            sum = 0;
+            for(int j = 0; j < size; j++) {
+                printf("a%d%d=", i+1, j+1);
+                noCharFloat(&a[i][j]);
+                if(i!=j) sum += a[i][j];
             }
+
+            if(fabs(a[i][i]) <= fabs(sum) ) {
+                cond = 1;
+                printf("\n|a[%d][%d]| must be higher than absolute value of the sum of the other coefficients!\n", i+1, i+1);
+                fflush(stdin);
+            }
+        } while (cond);
+
+        printf("b%d=", i+1);
+        noCharFloat(&b[i]);
+
+        xp[i] = b[i]/a[i][i];
+    }
+
+    displayMatrix(size, a, b);
+
+     do {
+         prop = 0;
+        for(int i = 0; i < size; i++) {
+            float d = 0;
+            for(int j = 0; j < size; j++) {
+                if(i==j) continue;
+                 d += a[i][j] * xp[j];
+            }
+
+            x[i] = (b[i] - d)/a[i][i];
+            delta[i] = fabs(x[i] - xp[i]);
+            xp[i] = x[i];
         }
 
-        printf("x%d = %g\n", i+1, det(equ, vars, roots) / detCoefs);
+        for(int i = 0; i < size; i++) {
+            if(prop < delta[i]) prop = delta[i];
+        }
+    } while(prop >= (1.0 / pow(10, e)));
+
+    for(int i = 0; i < size; i++) {
+        printf("x%d = %.*f\n", i+1, e, x[i]);
     }
+
+    for(int i = 0; i < size; i++) {
+        free(a[i]);
+    }
+    free(a);
+    free(b);
+    free(x);
+    free(xp);
+    free(delta);
     return 0;
 }
